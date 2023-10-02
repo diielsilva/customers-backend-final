@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mariadb-server:
+    image: mariadb:11.1
+    restart: always
+    environment:
+      TZ: America/Sao_Paulo
+      MARIADB_ROOT_PASSWORD: XF*49b^qX&Tt6k
+      MARIADB_ROOT_HOST: '%'
+      MARIADB_TCP_PORT: 3306
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    networks:
+      - customers-network
+  customers-backend:
+    image: diielsilva/customers-backend
+    restart: always
+    build: .
+    environment:
+      TZ: America/Sao_Paulo
+      SPRING.DATASOURCE.URL: jdbc:mariadb://mariadb-server:3306/customers_backend
+      SPRING.DATASOURCE.USERNAME: root
+      SPRING.DATASOURCE.PASSWORD: XF*49b^qX&Tt6k
+      SPRING.JPA.PROPERTIES.HIBERNATE.DIALECT: org.hibernate.dialect.MariaDB111Dialect
+      SERVER.PORT: 80
+
+    ports:
+      - '80:80'
+    command: mvn spring-boot:run
+    networks:
+      - customers-network
+    depends_on:
+      - mariadb-server
+networks:
+  customers-network:
+    driver: bridge
