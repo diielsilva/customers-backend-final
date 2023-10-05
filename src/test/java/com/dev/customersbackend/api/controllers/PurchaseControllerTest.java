@@ -34,37 +34,39 @@ class PurchaseControllerTest {
     @BeforeEach
     void setup() {
         headers = new HttpHeaders();
-        ResponseEntity<UserAccessResponseDTO> response =
+        ResponseEntity<UserAccessResponseDTO> authResponse =
                 restTemplate.postForEntity("/auth", UserFactory.getUserCredentials(), UserAccessResponseDTO.class);
-        headers.add("Authorization", "Bearer " + response.getBody().getToken());
+        assertNotNull(authResponse.getBody());
+        headers.add("Authorization", "Bearer " + authResponse.getBody().getToken());
     }
 
     @Test
     void save_AssertPurchaseWasSaved_WhenNoOneExceptionWasThrown() {
-        ResponseEntity<CustomerResponseDTO> responseOne =
+        ResponseEntity<CustomerResponseDTO> saveCustomerResponse =
                 restTemplate.exchange("/customers",
                         HttpMethod.POST,
                         new HttpEntity<>(CustomerFactory.getViniciusRequestDTO(), headers),
                         new ParameterizedTypeReference<>() {
                         }
                 );
-        ResponseEntity<CustomerResponseDTO> responseTwo =
+        assertNotNull(saveCustomerResponse.getBody());
+
+        ResponseEntity<CustomerResponseDTO> savePurchaseResponse =
                 restTemplate.exchange("/purchases/{customerId}",
                         HttpMethod.POST,
                         new HttpEntity<>(headers),
                         new ParameterizedTypeReference<>() {
                         },
-                        responseOne.getBody().getId()
+                        saveCustomerResponse.getBody().getId()
                 );
-        assertNotNull(responseTwo);
-        assertNotNull(responseTwo.getBody());
-        assertEquals(HttpStatus.CREATED, responseTwo.getStatusCode());
-        deleteCustomer(responseOne.getBody().getId());
+        assertNotNull(savePurchaseResponse);
+        assertNotNull(savePurchaseResponse.getBody());
+        assertEquals(HttpStatus.CREATED, savePurchaseResponse.getStatusCode());
     }
 
     @Test
     void save_AssertAnExceptionWasThrown_WhenCustomersIdIsNotFound() {
-        ResponseEntity<ErrorResponseDTO> response =
+        ResponseEntity<ErrorResponseDTO> savePurchaseResponse =
                 restTemplate.exchange("/purchases/{customerId}",
                         HttpMethod.POST,
                         new HttpEntity<>(headers),
@@ -72,14 +74,14 @@ class PurchaseControllerTest {
                         },
                         -1L
                 );
-        assertNotNull(response);
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(savePurchaseResponse);
+        assertEquals(HttpStatus.NOT_FOUND, savePurchaseResponse.getStatusCode());
     }
 
     @Test
     void save_AssertAnExceptionWasThrown_WhenTokenIsNull() {
         headers = new HttpHeaders();
-        ResponseEntity<ErrorResponseDTO> response =
+        ResponseEntity<ErrorResponseDTO> savePurchaseResponse =
                 restTemplate.exchange("/purchases/{customerId}",
                         HttpMethod.POST,
                         new HttpEntity<>(headers),
@@ -87,14 +89,14 @@ class PurchaseControllerTest {
                         },
                         -1L
                 );
-        assertNotNull(response);
-        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(savePurchaseResponse);
+        assertEquals(HttpStatus.FORBIDDEN, savePurchaseResponse.getStatusCode());
     }
 
     @Test
     void save_AssertAnExceptionWasThrown_WhenTokenIsInvalid() {
         generateInvalidToken();
-        ResponseEntity<ErrorResponseDTO> response =
+        ResponseEntity<ErrorResponseDTO> savePurchaseResponse =
                 restTemplate.exchange("/purchases/{customerId}",
                         HttpMethod.POST,
                         new HttpEntity<>(headers),
@@ -102,70 +104,73 @@ class PurchaseControllerTest {
                         },
                         -1L
                 );
-        assertNotNull(response);
-        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertNotNull(savePurchaseResponse);
+        assertEquals(HttpStatus.FORBIDDEN, savePurchaseResponse.getStatusCode());
     }
 
     @Test
     void findAllByCustomer_AssertThatArePurchase_WhenHaveStoredPurchases() {
-        ResponseEntity<CustomerResponseDTO> responseOne =
+        ResponseEntity<CustomerResponseDTO> saveCustomerResponse =
                 restTemplate.exchange("/customers",
                         HttpMethod.POST,
                         new HttpEntity<>(CustomerFactory.getViniciusRequestDTO(), headers),
                         new ParameterizedTypeReference<>() {
                         }
                 );
-        ResponseEntity<PurchaseResponseDTO> responseTwo =
+        assertNotNull(saveCustomerResponse.getBody());
+
+        ResponseEntity<PurchaseResponseDTO> savePurchaseResponse =
                 restTemplate.exchange("/purchases/{customerId}",
                         HttpMethod.POST,
                         new HttpEntity<>(headers),
                         new ParameterizedTypeReference<>() {
                         },
-                        responseOne.getBody().getId()
+                        saveCustomerResponse.getBody().getId()
                 );
-        ResponseEntity<List<PurchaseResponseDTO>> responseThree =
+
+        ResponseEntity<List<PurchaseResponseDTO>> findPurchasesByCustomerResponse =
                 restTemplate.exchange("/purchases/{customerId}",
                         HttpMethod.GET,
                         new HttpEntity<>(headers),
                         new ParameterizedTypeReference<>() {
                         },
-                        responseOne.getBody().getId()
+                        saveCustomerResponse.getBody().getId()
                 );
-        assertNotNull(responseThree);
-        assertNotNull(responseThree.getBody());
-        assertNotNull(responseThree.getBody().get(0).getId());
-        assertEquals(1, responseThree.getBody().size());
-        assertEquals(HttpStatus.OK, responseThree.getStatusCode());
-        deleteCustomer(responseOne.getBody().getId());
+        assertNotNull(findPurchasesByCustomerResponse);
+        assertNotNull(findPurchasesByCustomerResponse.getBody());
+        assertNotNull(findPurchasesByCustomerResponse.getBody().get(0).getId());
+        assertEquals(1, findPurchasesByCustomerResponse.getBody().size());
+        assertEquals(HttpStatus.OK, findPurchasesByCustomerResponse.getStatusCode());
     }
 
     @Test
     void findAllByCustomer_AssertThatAreNotPurchase_WhenHaveNotStoredPurchases() {
-        ResponseEntity<CustomerResponseDTO> responseOne =
+        ResponseEntity<CustomerResponseDTO> saveCustomerResponse =
                 restTemplate.exchange("/customers",
                         HttpMethod.POST,
                         new HttpEntity<>(CustomerFactory.getViniciusRequestDTO(), headers),
                         new ParameterizedTypeReference<>() {
                         }
                 );
-        ResponseEntity<List<PurchaseResponseDTO>> responseTwo =
+        assertNotNull(saveCustomerResponse.getBody());
+
+        ResponseEntity<List<PurchaseResponseDTO>> findPurchasesByCustomerResponse =
                 restTemplate.exchange("/purchases/{customerId}",
                         HttpMethod.GET,
                         new HttpEntity<>(headers),
                         new ParameterizedTypeReference<>() {
                         },
-                        responseOne.getBody().getId()
+                        saveCustomerResponse.getBody().getId()
                 );
-        assertNotNull(responseTwo);
-        assertNotNull(responseTwo.getBody());
-        assertTrue(responseTwo.getBody().isEmpty());
-        assertEquals(HttpStatus.OK, responseTwo.getStatusCode());
-        deleteCustomer(responseOne.getBody().getId());
+        assertNotNull(findPurchasesByCustomerResponse);
+        assertNotNull(findPurchasesByCustomerResponse.getBody());
+        assertTrue(findPurchasesByCustomerResponse.getBody().isEmpty());
+        assertEquals(HttpStatus.OK, findPurchasesByCustomerResponse.getStatusCode());
     }
 
     @Test
     void findAllByCustomer_AssertThatAnExceptionWasThrown_WhenCustomerIdIsNotFound() {
-        ResponseEntity<ErrorResponseDTO> response =
+        ResponseEntity<ErrorResponseDTO> findPurchasesByCustomerResponse =
                 restTemplate.exchange("/purchases/{customerId}",
                         HttpMethod.GET,
                         new HttpEntity<>(headers),
@@ -173,75 +178,68 @@ class PurchaseControllerTest {
                         },
                         -1L
                 );
-        assertNotNull(response);
-        assertNotNull(response.getBody());
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertNotNull(findPurchasesByCustomerResponse);
+        assertNotNull(findPurchasesByCustomerResponse.getBody());
+        assertEquals(HttpStatus.NOT_FOUND, findPurchasesByCustomerResponse.getStatusCode());
     }
 
     @Test
     void delete_AssertPurchaseWasDeleted_WhenNoOneExceptionWasThrown() {
-        ResponseEntity<CustomerResponseDTO> responseOne =
+        ResponseEntity<CustomerResponseDTO> saveCustomerResponse =
                 restTemplate.exchange("/customers",
                         HttpMethod.POST,
                         new HttpEntity<>(CustomerFactory.getViniciusRequestDTO(), headers),
                         new ParameterizedTypeReference<>() {
                         }
                 );
-        ResponseEntity<PurchaseResponseDTO> responseTwo =
+        assertNotNull(saveCustomerResponse.getBody());
+
+        ResponseEntity<PurchaseResponseDTO> savePurchaseResponse =
                 restTemplate.exchange("/purchases/{customerId}",
                         HttpMethod.POST,
                         new HttpEntity<>(CustomerFactory.getViniciusRequestDTO(), headers),
                         new ParameterizedTypeReference<>() {
                         },
-                        responseOne.getBody().getId()
+                        saveCustomerResponse.getBody().getId()
                 );
-        ResponseEntity<Void> responseThree =
+        assertNotNull(savePurchaseResponse.getBody());
+
+        ResponseEntity<Void> deletePurchaseResponse =
                 restTemplate.exchange("/purchases/{customerId}/{purchaseId}",
                         HttpMethod.DELETE,
                         new HttpEntity<>(CustomerFactory.getViniciusRequestDTO(), headers),
                         new ParameterizedTypeReference<>() {
                         },
-                        responseOne.getBody().getId(),
-                        responseTwo.getBody().getId()
+                        saveCustomerResponse.getBody().getId(),
+                        savePurchaseResponse.getBody().getId()
                 );
-        assertNotNull(responseThree);
-        assertEquals(HttpStatus.NO_CONTENT, responseThree.getStatusCode());
-        deleteCustomer(responseOne.getBody().getId());
+        assertNotNull(deletePurchaseResponse);
+        assertEquals(HttpStatus.NO_CONTENT, deletePurchaseResponse.getStatusCode());
     }
 
     @Test
     void delete_AssertAnExceptionWasThrow_WhenPurchaseIdIsNotFound() {
-        ResponseEntity<CustomerResponseDTO> responseOne =
+        ResponseEntity<CustomerResponseDTO> saveCustomerResponse =
                 restTemplate.exchange("/customers",
                         HttpMethod.POST,
                         new HttpEntity<>(CustomerFactory.getViniciusRequestDTO(), headers),
                         new ParameterizedTypeReference<>() {
                         }
                 );
-        ResponseEntity<ErrorResponseDTO> responseTwo =
+        assertNotNull(saveCustomerResponse.getBody());
+
+        ResponseEntity<ErrorResponseDTO> deletePurchaseResponse =
                 restTemplate.exchange("/purchases/{customerId}/{purchaseId}",
                         HttpMethod.DELETE,
                         new HttpEntity<>(CustomerFactory.getViniciusRequestDTO(), headers),
                         new ParameterizedTypeReference<>() {
                         },
-                        responseOne.getBody().getId(),
+                        saveCustomerResponse.getBody().getId(),
                         -1L
                 );
-        assertNotNull(responseTwo);
-        assertNotNull(responseTwo.getBody());
-        assertEquals(HttpStatus.NOT_FOUND, responseTwo.getStatusCode());
-        deleteCustomer(responseOne.getBody().getId());
-    }
-
-    private void deleteCustomer(long id) {
-        ResponseEntity<ErrorResponseDTO> response =
-                restTemplate.exchange("/customers/{id}",
-                        HttpMethod.DELETE,
-                        new HttpEntity<>(headers),
-                        new ParameterizedTypeReference<>() {
-                        },
-                        id
-                );
+        assertNotNull(deletePurchaseResponse);
+        assertNotNull(deletePurchaseResponse.getBody());
+        assertEquals(HttpStatus.NOT_FOUND, deletePurchaseResponse.getStatusCode());
     }
 
     private void generateInvalidToken() {

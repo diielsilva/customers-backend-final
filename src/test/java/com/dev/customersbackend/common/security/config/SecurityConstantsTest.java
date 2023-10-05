@@ -18,21 +18,21 @@ class SecurityConstantsTest {
     void getAesKey_AssertThatAreKey_WhenApplicationFileIsSuccessfullyLoaded() {
         String key = constants.getAesKeyOrThrowsException();
         assertNotNull(key);
-        assertEquals("7481c834-1288-45", key);
+        assertEquals("12345abc12345abc", key);
     }
 
     @Test
     void getTokenKey_AssertThatAreKey_WhenApplicationProfileIsSuccessfullyLoaded() {
         String key = constants.getTokenKeyOrThrowsException();
         assertNotNull(key);
-        assertEquals("9b8879a4-1884-4a98-9a5f-807fd987024b", key);
+        assertEquals("12345bbc", key);
     }
 
     @Test
     void getTokenDuration_AssertThatAreDuration_WhenApplicationProfileIsSuccessfullyLoaded() {
         Long duration = constants.getTokenDurationOrThrowsException();
         assertNotNull(duration);
-        assertEquals(60000L, duration);
+        assertEquals(43200000L, duration);
     }
 
 }

@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(value = "local")
 @Transactional
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class CustomerControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
@@ -56,7 +58,6 @@ class CustomerControllerTest {
         assertNotNull(saveCustomerResponse.getBody());
         assertEquals("Vinicius Tiago Nathan Pires", saveCustomerResponse.getBody().getName());
         assertEquals(HttpStatus.CREATED, saveCustomerResponse.getStatusCode());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -74,7 +75,6 @@ class CustomerControllerTest {
         assertNotNull(saveCustomerResponse.getBody());
         assertEquals("Vinicius Tiago Nathan Pires", saveCustomerResponse.getBody().getName());
         assertEquals(HttpStatus.CREATED, saveCustomerResponse.getStatusCode());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -92,7 +92,6 @@ class CustomerControllerTest {
         assertNotNull(saveCustomerResponse.getBody());
         assertEquals("Vinicius Tiago Nathan Pires", saveCustomerResponse.getBody().getName());
         assertEquals(HttpStatus.CREATED, saveCustomerResponse.getStatusCode());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -226,8 +225,6 @@ class CustomerControllerTest {
         assertFalse(findCustomersOrderedByNameResponse.getBody().isEmpty());
         assertEquals(2, findCustomersOrderedByNameResponse.getBody().getContent().size());
         assertEquals("Agatha Hadassa Sebastiana Silva", findCustomersOrderedByNameResponse.getBody().getContent().get(0).getName());
-        deleteCustomer(saveFirstCustomerResponse.getBody().getId());
-        deleteCustomer(saveSecondCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -267,7 +264,6 @@ class CustomerControllerTest {
         assertNotNull(findCustomerByIdResponse.getBody());
         assertEquals(saveCustomerResponse.getBody().getId(), findCustomerByIdResponse.getBody().getId());
         assertEquals(HttpStatus.OK, findCustomerByIdResponse.getStatusCode());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -306,7 +302,6 @@ class CustomerControllerTest {
         assertNotNull(findCustomerByNameResponse);
         assertNotNull(findCustomerByNameResponse.getBody());
         assertEquals("Vinicius Tiago Nathan Pires", findCustomerByNameResponse.getBody().getContent().get(0).getName());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -330,7 +325,6 @@ class CustomerControllerTest {
         assertNotNull(findCustomerByNameResponse);
         assertNotNull(findCustomerByNameResponse.getBody());
         assertTrue(findCustomerByNameResponse.getBody().isEmpty());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -367,7 +361,6 @@ class CustomerControllerTest {
         assertNotNull(findCustomerResponse.getBody());
         assertEquals("Vini", findCustomerResponse.getBody().getName());
         assertEquals(HttpStatus.OK, findCustomerResponse.getStatusCode());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -396,7 +389,6 @@ class CustomerControllerTest {
         assertEquals(1, updateCustomerResponse.getBody().getDetails().size());
         assertEquals("O telefone é inválido.", updateCustomerResponse.getBody().getDetails().get(0));
         assertEquals(HttpStatus.BAD_REQUEST, updateCustomerResponse.getStatusCode());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -426,7 +418,6 @@ class CustomerControllerTest {
         assertEquals(1, updateCustomerResponse.getBody().getDetails().size());
         assertEquals("O CEP é inválido.", updateCustomerResponse.getBody().getDetails().get(0));
         assertEquals(HttpStatus.BAD_REQUEST, updateCustomerResponse.getStatusCode());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -455,7 +446,6 @@ class CustomerControllerTest {
         assertNotNull(updateCustomerResponse.getBody());
         assertEquals(1, updateCustomerResponse.getBody().getDetails().size());
         assertEquals(HttpStatus.BAD_REQUEST, updateCustomerResponse.getStatusCode());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -491,8 +481,6 @@ class CustomerControllerTest {
         assertNotNull(updateFirstCustomerResponse);
         assertNotNull(updateFirstCustomerResponse.getBody());
         assertEquals(HttpStatus.CONFLICT, updateFirstCustomerResponse.getStatusCode());
-        deleteCustomer(saveFirstCustomerResponse.getBody().getId());
-        deleteCustomer(saveSecondCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -519,7 +507,6 @@ class CustomerControllerTest {
         assertNotNull(updateCustomerResponse.getBody());
         assertFalse(updateCustomerResponse.getBody().getDetails().isEmpty());
         assertEquals(HttpStatus.BAD_REQUEST, updateCustomerResponse.getStatusCode());
-        deleteCustomer(saveCustomerResponse.getBody().getId());
     }
 
     @Test
@@ -572,17 +559,6 @@ class CustomerControllerTest {
                 );
         assertNotNull(deleteCustomerResponse);
         assertEquals(HttpStatus.NOT_FOUND, deleteCustomerResponse.getStatusCode());
-    }
-
-    private void deleteCustomer(long id) {
-        ResponseEntity<ErrorResponseDTO> deleteCustomerResponse =
-                restTemplate.exchange("/customers/{id}",
-                        HttpMethod.DELETE,
-                        new HttpEntity<>(headers),
-                        new ParameterizedTypeReference<>() {
-                        },
-                        id
-                );
     }
 
     private void generateInvalidToken() {

@@ -15,6 +15,8 @@ services:
       - '3306'
     networks:
       - customers-network
+    volumes:
+      - database_data:/var/lib/mysql
   customers-backend:
     image: diielsilva/customers-backend
     restart: always
@@ -25,8 +27,8 @@ services:
       SPRING.DATASOURCE.USERNAME: root
       SPRING.DATASOURCE.PASSWORD: XF*49b^qX&Tt6k
       SPRING.JPA.PROPERTIES.HIBERNATE.DIALECT: org.hibernate.dialect.MariaDB111Dialect
+      SPRING.JPA.PROEPRTIES.HIBERNATE.DDL-AUTO: update
       SERVER.PORT: 80
-
     ports:
       - '80:80'
     command: mvn spring-boot:run
@@ -37,3 +39,6 @@ services:
 networks:
   customers-network:
     driver: bridge
+
+volumes:
+  database_data:
