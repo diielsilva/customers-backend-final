@@ -1,5 +1,6 @@
 FROM openjdk:17-jdk-slim
 LABEL authors="Diel"
-COPY --from=build /app/target/*.jar app.jar
+ARG JAR_FILE
+COPY ${JAR_FILE} app.jar
 
 ENTRYPOINT ["java", "-jar", "/app.jar"]
