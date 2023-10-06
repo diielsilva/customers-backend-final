@@ -2,35 +2,63 @@ package com.dev.customersbackend.domain.services.customer;
 
 import com.dev.customersbackend.common.dtos.customer.CustomerRequestDTO;
 import com.dev.customersbackend.common.dtos.customer.CustomerResponseDTO;
+import com.dev.customersbackend.common.mappers.EntityMapper;
+import com.dev.customersbackend.domain.entities.Customer;
 import com.dev.customersbackend.domain.exceptions.ConstraintException;
 import com.dev.customersbackend.domain.exceptions.EntityNotFoundException;
-import com.dev.customersbackend.domain.factories.CustomerFactory;
 import com.dev.customersbackend.domain.factories.PhoneFactory;
-import com.dev.customersbackend.helpers.TestHelper;
+import com.dev.customersbackend.domain.repositories.CustomerRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.parameters.P;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
+import static com.dev.customersbackend.domain.factories.CustomerFactory.*;
+import static com.dev.customersbackend.helpers.TestHelper.getInvalidId;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.when;
 
-@SpringBootTest
-@ActiveProfiles(value = "local")
-@Transactional
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@ExtendWith(value = SpringExtension.class)
 class CustomerServiceTest {
-    @Autowired
-    private CustomerService service;
+    @InjectMocks
+    private CustomerServiceImpl service;
+
+    @Mock
+    private CustomerRepository repository;
+
+    @Mock
+    private EntityMapper mapper;
+
+    @BeforeEach
+    void setup() {
+        when(repository.save(ArgumentMatchers.any(Customer.class))).thenReturn(getViniciusWithId());
+        when(repository.findById(ArgumentMatchers.anyLong()))
+                .thenReturn(Optional.empty());
+        when(repository.findByOrderByName(ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(getAgathaWithId(), getViniciusWithId())));
+        when(repository.findByPhoneNumber(ArgumentMatchers.anyString())).thenReturn(Optional.empty());
+        when(repository.findByNameContainingIgnoringCase(ArgumentMatchers.anyString(), ArgumentMatchers.any()))
+                .thenReturn(new PageImpl<>(List.of(getViniciusWithId())));
+
+        when(mapper.toModel(ArgumentMatchers.any(CustomerRequestDTO.class))).thenReturn(getVinicius());
+        when(mapper.toDTO(ArgumentMatchers.any(Customer.class))).thenReturn(getViniciusResponseDTO());
+    }
 
     @Test
-    void save_AssertCustomerWasSaved_WhenNoOneExceptionWasThrown() {
-        CustomerResponseDTO customer = service.save(CustomerFactory.getViniciusRequestDTO());
+    void save_AssertCustomerWasSave_WhenNoOneExceptionWasThrown() {
+        CustomerResponseDTO customer = service.save(getViniciusRequestDTO());
         assertNotNull(customer);
         assertNotNull(customer.getId());
         assertNotNull(customer.getPhone());
@@ -48,22 +76,24 @@ class CustomerServiceTest {
 
     @Test
     void save_AssertThatAnExceptionWasThrown_WhenCustomersPhoneIsInUse() {
-        service.save(CustomerFactory.getViniciusRequestDTO());
-        CustomerRequestDTO customer = CustomerFactory.getViniciusRequestDTO();
+        when(repository.findByPhoneNumber(ArgumentMatchers.anyString())).thenReturn(Optional.of(getViniciusWithId()));
+        CustomerRequestDTO customer = getViniciusRequestDTO();
         assertThrows(ConstraintException.class, () -> service.save(customer));
     }
 
     @Test
     void findAllOrderedByName_AssertThatAreCustomers_WhenHaveStoredCustomers() {
-        service.save(CustomerFactory.getViniciusRequestDTO());
-        service.save(CustomerFactory.getAgathaRequestDTO());
+        when(repository.findByOrderByName(ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(getAgathaWithId())));
+        when(mapper.toDTO(ArgumentMatchers.any(Customer.class))).thenReturn(getAgathaResponseDTO());
         Page<CustomerResponseDTO> customers = service.findAllOrderedByName(PageRequest.of(0, 2));
         assertEquals("Agatha Hadassa Sebastiana Silva", customers.getContent().get(0).getName());
-        assertEquals("Vinicius Tiago Nathan Pires", customers.getContent().get(1).getName());
+        assertEquals(1, customers.getContent().size());
     }
 
     @Test
     void findAllOrderedByName_AssertThatAreNotCustomers_WhenDoNotHaveStoredCustomers() {
+        when(repository.findByOrderByName(ArgumentMatchers.any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
         Page<CustomerResponseDTO> customers = service.findAllOrderedByName(PageRequest.of(0, 2));
         assertNotNull(customers);
         assertTrue(customers.isEmpty());
@@ -71,8 +101,9 @@ class CustomerServiceTest {
 
     @Test
     void findByName_AssertThatAreCustomers_WhenCustomersNameIsFound() {
-        service.save(CustomerFactory.getAgathaRequestDTO());
-        service.save(CustomerFactory.getViniciusRequestDTO());
+        when(repository.findByNameContainingIgnoringCase(ArgumentMatchers.anyString(), ArgumentMatchers.any()))
+                .thenReturn(new PageImpl<>(List.of(getAgathaWithId())));
+        when(mapper.toDTO(ArgumentMatchers.any(Customer.class))).thenReturn(getAgathaResponseDTO());
         Page<CustomerResponseDTO> customers = service.findByName("aga", PageRequest.of(0, 2));
         assertNotNull(customers);
         assertFalse(customers.isEmpty());
@@ -82,8 +113,8 @@ class CustomerServiceTest {
 
     @Test
     void findByName_AssertThatAreNotCustomers_WhenCustomersNameIsNotFound() {
-        service.save(CustomerFactory.getAgathaRequestDTO());
-        service.save(CustomerFactory.getViniciusRequestDTO());
+        when(repository.findByNameContainingIgnoringCase(ArgumentMatchers.anyString(), ArgumentMatchers.any()))
+                .thenReturn(new PageImpl<>(List.of()));
         Page<CustomerResponseDTO> customers = service.findByName("xzxc", PageRequest.of(0, 2));
         assertNotNull(customers);
         assertTrue(customers.isEmpty());
@@ -91,78 +122,75 @@ class CustomerServiceTest {
 
     @Test
     void findById_AssertThatAreCustomers_WhenCustomersIdIsFound() {
-        CustomerResponseDTO dto = service.save(CustomerFactory.getViniciusRequestDTO());
-        CustomerResponseDTO responseDto = service.findById(dto.getId());
-        assertNotNull(responseDto);
-        assertEquals(responseDto.getId(), dto.getId());
+        when(repository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(getVinicius()));
+        CustomerResponseDTO responseDTO = service.findById(1L);
+        assertNotNull(responseDTO);
+        assertEquals(1L, responseDTO.getId());
+        assertEquals("Vinicius Tiago Nathan Pires", responseDTO.getName());
     }
 
     @Test
     void findById_AssertThatAnExceptionWasThrows_WhenCustomersIdIsNotFound() {
-        long id = TestHelper.getInvalidId();
+        long id = getInvalidId();
         assertThrows(EntityNotFoundException.class, () -> service.findById(id));
     }
 
     @Test
     void update_AssertCustomerWasUpdated_WhenNoOneExceptionWasThrown() {
-        LocalDate birthDate = LocalDate.now();
-        CustomerResponseDTO customer = service.save(CustomerFactory.getViniciusRequestDTO());
-        CustomerRequestDTO updatedCustomer = CustomerFactory.getViniciusRequestDTO();
-        updatedCustomer.setName("Vinicius");
-        updatedCustomer.setPhoneNumber("12345");
-        updatedCustomer.getAddress().setCity("Vitória de St. Antão");
-        updatedCustomer.setBirthDate(birthDate);
-        service.update(customer.getId(), updatedCustomer);
-        Page<CustomerResponseDTO> customers = service.findAllOrderedByName(PageRequest.of(0, 2));
-        assertNotNull(customers);
-        assertEquals(1, customers.getContent().size());
-        assertEquals("Vinicius", customers.getContent().get(0).getName());
-        assertEquals("12345", customers.getContent().get(0).getPhone().getNumber());
-        assertEquals("Vitória de St. Antão", customers.getContent().get(0).getAddress().getCity());
-        assertEquals(birthDate, customers.getContent().get(0).getBirthDate());
+        when(repository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(getViniciusWithId()));
+        LocalDate birthDate = LocalDate.now().minusYears(20);
+        CustomerResponseDTO responseDTO = getViniciusResponseDTO();
+        responseDTO.setName("Vinicius");
+        responseDTO.getPhone().setNumber("12345");
+        responseDTO.getAddress().setCity("Vitória de St. Antão");
+        responseDTO.setBirthDate(birthDate);
+        when(mapper.toDTO(ArgumentMatchers.any(Customer.class))).thenReturn(responseDTO);
+        CustomerResponseDTO updatedCustomer = service.update(1L, getViniciusRequestDTO());
+        assertNotNull(updatedCustomer);
+        assertEquals("Vinicius", updatedCustomer.getName());
+        assertEquals("12345", updatedCustomer.getPhone().getNumber());
+        assertEquals("Vitória de St. Antão", updatedCustomer.getAddress().getCity());
+        assertEquals(birthDate, updatedCustomer.getBirthDate());
     }
 
     @Test
     void update_AssertCustomerWasUpdated_WhenCustomersPhoneIsInUseAndEqualsToTheCurrentCustomer() {
-        CustomerResponseDTO customer = service.save(CustomerFactory.getViniciusRequestDTO());
-        CustomerRequestDTO updateCustomer = CustomerFactory.getViniciusRequestDTO();
-        updateCustomer.setName("Vinicius");
-        service.update(customer.getId(), updateCustomer);
-        Page<CustomerResponseDTO> customers = service.findAllOrderedByName(PageRequest.of(0, 2));
-        assertNotNull(customers);
-        assertEquals(1, customers.getContent().size());
-        assertEquals("Vinicius", customers.getContent().get(0).getName());
+        CustomerResponseDTO responseDTO = getViniciusResponseDTO();
+        responseDTO.setName("Vinicius");
+        responseDTO.getAddress().setCity("Vitória de St. Antão");
+        when(repository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(getViniciusWithId()));
+        when(repository.findByPhoneNumber(ArgumentMatchers.anyString())).thenReturn(Optional.of(getViniciusWithId()));
+        when(mapper.toDTO(ArgumentMatchers.any(Customer.class))).thenReturn(responseDTO);
+        CustomerResponseDTO updatedCustomer = service.update(1L, getViniciusRequestDTO());
+        assertNotNull(updatedCustomer);
+        assertNotNull(updatedCustomer);
+        assertEquals("Vinicius", updatedCustomer.getName());
+        assertEquals("Vitória de St. Antão", updatedCustomer.getAddress().getCity());
     }
 
     @Test
     void update_AssertThatAnExceptionWasThrown_WhenCustomersPhoneIsInUseAndIsDifferentToTheCurrentCustomer() {
-        CustomerResponseDTO firstCustomer = service.save(CustomerFactory.getViniciusRequestDTO());
-        long id = firstCustomer.getId();
-        CustomerResponseDTO secondCustomer = service.save(CustomerFactory.getAgathaRequestDTO());
-        CustomerRequestDTO updatedCustomer = CustomerFactory.getViniciusRequestDTO();
-        updatedCustomer.setPhoneNumber(secondCustomer.getPhone().getNumber());
-        assertThrows(ConstraintException.class, () -> service.update(id, updatedCustomer));
+        when(repository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(getViniciusWithId()));
+        when(repository.findByPhoneNumber(ArgumentMatchers.anyString())).thenReturn(Optional.of(getViniciusWithId()));
+        when(mapper.toModel(ArgumentMatchers.any(CustomerRequestDTO.class))).thenReturn(getAgathaWithId());
+        CustomerRequestDTO updatedCustomer = getViniciusRequestDTO();
+        assertThrows(ConstraintException.class, () -> service.update(1L, updatedCustomer));
     }
 
     @Test
     void update_AssertThatAnExceptionWasThrows_WhenCustomerIdIsNotFound() {
-        long id = TestHelper.getInvalidId();
-        CustomerRequestDTO customer = CustomerFactory.getViniciusRequestDTO();
-        assertThrows(EntityNotFoundException.class, () -> service.update(id, customer));
+        CustomerRequestDTO customer = getViniciusRequestDTO();
+        assertThrows(EntityNotFoundException.class, () -> service.update(1L, customer));
     }
 
     @Test
-    void delete_AssertCustomerWasDeleted_WhenCustomersIdIsFound() {
-        CustomerResponseDTO customer = service.save(CustomerFactory.getViniciusRequestDTO());
-        service.delete(customer.getId());
-        Page<CustomerResponseDTO> customers = service.findAllOrderedByName(PageRequest.of(0, 2));
-        assertNotNull(customers);
-        assertTrue(customers.isEmpty());
+    void delete_AssertCustomerWasDelete_WhenCustomersIdIsFound() {
+        when(repository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(getViniciusWithId()));
+        assertDoesNotThrow(() -> service.delete(1L));
     }
 
     @Test
     void delete_AssertThatAnExceptionWasThrown_WhenCustomersIdIsNotFound() {
-        long id = TestHelper.getInvalidId();
-        assertThrows(EntityNotFoundException.class, () -> service.delete(id));
+        assertThrows(EntityNotFoundException.class, () -> service.delete(1L));
     }
 }

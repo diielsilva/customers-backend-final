@@ -1,5 +1,6 @@
 package com.dev.customersbackend.domain.factories;
 
+import com.dev.customersbackend.common.dtos.phone.PhoneResponseDTO;
 import com.dev.customersbackend.domain.entities.Phone;
 
 public class PhoneFactory {
@@ -20,5 +21,13 @@ public class PhoneFactory {
 
     public static Phone getAgathaPhoneWithoutId() {
         return new Phone("71998904074");
+    }
+
+    public static PhoneResponseDTO getViniciusPhoneResponseDTO() {
+        return new PhoneResponseDTO(1L, "67999797354");
+    }
+
+    public static PhoneResponseDTO getAgathaPhoneResponseDTO() {
+        return new PhoneResponseDTO(2L, "71998904074");
     }
 }
