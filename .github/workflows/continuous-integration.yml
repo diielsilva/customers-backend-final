@@ -26,7 +26,7 @@ jobs:
         java-version: '17'
         distribution: 'adopt'
         cache: maven
-    - name: Built Customers Backend Image
+    - name: Built Customers Backend Image App
       run: |
         pwd
         docker compose build
@@ -34,9 +34,9 @@ jobs:
         
     - name: Pushing to Docker Hub
       run: |
-        docker tag ${{ secrets.DOCKER_USERNAME }}/customers-backend:latest ${{ secrets.DOCKER_PASSWORD }}/customers-backend:${{ github.run_id }}
-        docker push ${{ secrets.DOCKER_USERNAME }}/customers-backend:${{ github.run_id }}
-        docker push ${{ secrets.DOCKER_USERNAME }}/customers-backend:latest
+        docker tag ${{ secrets.DOCKER_USERNAME }}/customers-backend-final:latest ${{ secrets.DOCKER_PASSWORD }}/customers-backend-final:${{ github.run_id }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/customers-backend-final:${{ github.run_id }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/customers-backend-final:latest
   
     
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
