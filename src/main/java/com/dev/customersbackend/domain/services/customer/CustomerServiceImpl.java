@@ -41,7 +41,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Page<CustomerResponseDTO> findByName(String name, Pageable pageable) {
-        Page<Customer> customers = customerRepository.findByNameContaining(name, pageable);
+        Page<Customer> customers = customerRepository.findByNameContainingIgnoringCase(name, pageable);
         return customers.map(entityMapper::toDTO);
     }
 
