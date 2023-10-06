@@ -27,7 +27,6 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Built Customers Backend Image
-      working-directory: .
       run: |
         pwd
         docker compose build
