@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles(value = "local")
 @Transactional
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class UserRepositoryTest {
     @Autowired
     private UserRepository repository;
@@ -29,8 +27,8 @@ class UserRepositoryTest {
         List<User> models = repository.findAll();
         assertNotNull(models);
         assertFalse(models.isEmpty());
-        assertEquals(2, models.size());
-        assertEquals("Oliver Bernardo Melo", models.get(1).getCompleteName());
+        assertEquals(1, models.size());
+        assertEquals("Oliver Bernardo Melo", models.get(0).getCompleteName());
     }
 
     @Test
