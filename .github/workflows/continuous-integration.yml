@@ -28,8 +28,11 @@ jobs:
         cache: maven
     - name: Built Customers Backend Image
       working-directory: .
-      run: docker compose build
-
+      run: |
+        pwd
+        docker compose build
+        
+        
     - name: Pushing to Docker Hub
       run: |
         docker tag ${{ secrets.DOCKER_USERNAME }}/customers-backend:latest ${{ secrets.DOCKER_PASSWORD }}/customers-backend:${{ github.run_id }}
