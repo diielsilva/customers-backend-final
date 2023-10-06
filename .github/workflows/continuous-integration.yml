@@ -27,7 +27,7 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Built Customers Backend Image
-      working-directory: .
+      working-directory: ../
       run: docker compose build
 
     - name: Pushing to Docker Hub
