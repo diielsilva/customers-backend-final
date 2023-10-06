@@ -1,3 +1,6 @@
+file:
+  upload-dir: /home/runner/work/customers-backend-final/UploadDir
+
 spring:
   datasource:
     url: jdbc:mariadb://localhost:3306/customers_backend
