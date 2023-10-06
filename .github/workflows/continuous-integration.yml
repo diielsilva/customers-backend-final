@@ -34,4 +34,4 @@ jobs:
         
     - name: Pushing to Docker Hub
       run: |
-        docker push diielsilva/customers-backend-final:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/customers-backend-final:latest
