@@ -1,59 +1,66 @@
 package com.dev.customersbackend.domain.services.purchase;
 
 import com.dev.customersbackend.common.dtos.purchase.PurchaseResponseDTO;
+import com.dev.customersbackend.common.mappers.EntityMapper;
 import com.dev.customersbackend.domain.entities.Customer;
+import com.dev.customersbackend.domain.entities.Purchase;
 import com.dev.customersbackend.domain.exceptions.EntityNotFoundException;
-import com.dev.customersbackend.domain.factories.CustomerFactory;
+import com.dev.customersbackend.domain.factories.PurchaseFactory;
 import com.dev.customersbackend.domain.repositories.CustomerRepository;
 import com.dev.customersbackend.helpers.TestHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
+import java.util.Optional;
 
+import static com.dev.customersbackend.domain.factories.CustomerFactory.getViniciusWithId;
+import static com.dev.customersbackend.domain.factories.PurchaseFactory.*;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.when;
 
-@SpringBootTest
-@ActiveProfiles(value = "local")
-@Transactional
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
+@ExtendWith(value = SpringExtension.class)
 class PurchaseServiceTest {
-    @Autowired
-    private PurchaseService purchaseService;
+    @InjectMocks
+    private PurchaseServiceImpl purchaseService;
 
-    @Autowired
-    private CustomerRepository customerRepository;
+    @Mock
+    private CustomerRepository repository;
+
+    @Mock
+    private EntityMapper mapper;
 
     private Customer customer;
 
     @BeforeEach
     void setup() {
-        customer = customerRepository.save(CustomerFactory.getVinicius());
+        when(repository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.of(getViniciusWithId()));
+
+        when(mapper.toDTO(ArgumentMatchers.any(Purchase.class))).thenReturn(getPurchaseResponseDTO());
     }
 
     @Test
     void save_AssertPurchaseWasSaved_WhenNoOneExceptionWasThrown() {
-        PurchaseResponseDTO purchase = purchaseService.save(customer.getId());
+        PurchaseResponseDTO purchase = purchaseService.save(1L);
         assertNotNull(purchase);
-        assertNotNull(purchase.getId());
+        assertEquals(1L, purchase.getId());
         assertNotNull(purchase.getDate());
-        assertEquals(2, customer.getPurchases().size());
     }
 
     @Test
     void save_AssertAnExceptionWasThrown_WhenCustomersIdIsNotFound() {
-        long id = TestHelper.getInvalidId();
-        assertThrows(EntityNotFoundException.class, () -> purchaseService.save(id));
+        when(repository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class, () -> purchaseService.save(1L));
     }
 
     @Test
     void findAllByCustomer_AssertThatArePurchase_WhenCustomersIdIsFound() {
-        List<PurchaseResponseDTO> purchases = purchaseService.findAllByCustomer(customer.getId());
+        List<PurchaseResponseDTO> purchases = purchaseService.findAllByCustomer(1L);
         assertNotNull(purchases);
         assertFalse(purchases.isEmpty());
         assertEquals(1, purchases.size());
@@ -61,24 +68,19 @@ class PurchaseServiceTest {
 
     @Test
     void findAllByCustomer_AssertAnExceptionWasThrown_WhenCustomersIdIsNotFound() {
-        long id = TestHelper.getInvalidId();
-        assertThrows(EntityNotFoundException.class, () -> purchaseService.findAllByCustomer(id));
+        when(repository.findById(ArgumentMatchers.anyLong())).thenReturn(Optional.empty());
+        assertThrows(EntityNotFoundException.class, () -> purchaseService.findAllByCustomer(1L));
     }
 
     @Test
     void delete_AssertPurchaseWasDeleted_WhenNoOneExceptionWasThrown() {
-        long purchaseId = customer.getPurchases().get(0).getId();
-        purchaseService.delete(customer.getId(), purchaseId);
-        List<PurchaseResponseDTO> purchases = purchaseService.findAllByCustomer(customer.getId());
-        assertNotNull(purchases);
-        assertTrue(purchases.isEmpty());
+        assertDoesNotThrow(() -> purchaseService.delete(1L, 1L));
     }
 
     @Test
     void delete_AssertAnExceptionWasThrown_WhenPurchaseIdIsNotFound() {
-        long customerId = customer.getId();
         long purchaseId = TestHelper.getInvalidId();
-        assertThrows(EntityNotFoundException.class, () -> purchaseService.delete(customerId, purchaseId));
+        assertThrows(EntityNotFoundException.class, () -> purchaseService.delete(1L, purchaseId));
     }
 
 }

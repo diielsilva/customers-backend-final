@@ -25,7 +25,7 @@ public class CustomerFactory {
         Customer customer = new Customer(1L, "Vinicius Tiago Nathan Pires", PhoneFactory.getViniciusPhoneWithId(), LocalDate.now(),
                 AddressFactory.getViniciusAddressWithId(),
                 new ArrayList<>());
-        customer.getPurchases().add(new Purchase(customer, LocalDate.now()));
+        customer.getPurchases().add(new Purchase(1L, customer, LocalDate.now()));
         return customer;
     }
 
@@ -71,7 +71,7 @@ public class CustomerFactory {
     }
 
     public static CustomerResponseDTO getAgathaResponseDTO() {
-        return new CustomerResponseDTO(2L,"Agatha Hadassa Sebastiana Silva", PhoneFactory.getAgathaPhoneResponseDTO(), AddressFactory.getAgathaAddressResponseDTO(),
+        return new CustomerResponseDTO(2L, "Agatha Hadassa Sebastiana Silva", PhoneFactory.getAgathaPhoneResponseDTO(), AddressFactory.getAgathaAddressResponseDTO(),
                 LocalDate.now().minusYears(25));
     }
 }
