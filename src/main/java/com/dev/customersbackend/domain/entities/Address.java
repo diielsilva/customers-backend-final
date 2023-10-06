@@ -4,6 +4,7 @@ import com.dev.customersbackend.common.security.helpers.converter.DataConverterH
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "tbl_address")
 public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
