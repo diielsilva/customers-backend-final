@@ -27,13 +27,14 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Built Customers Backend Image
+      working-directory: .
       run: docker compose build
 
     - name: Pushing to Docker Hub
       run: |
         docker tag ${{ secrets.DOCKER_USERNAME }}/customers-backend:latest ${{ secrets.DOCKER_PASSWORD }}/customers-backend:${{ github.run_id }}
-        docker push ${{ secrets.DOCUER_USERNAME }}/customers-backend:latest
-        docker push ${{ secrets.DOCUER_USERNAME }}/customers-backend:${{ github.run_id }}
+        docker push ${{ secrets.DOCKER_USERNAME }}/customers-backend:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/customers-backend:${{ github.run_id }}
     
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Update dependency graph
