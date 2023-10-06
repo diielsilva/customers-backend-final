@@ -1,1 +1,0 @@
-insert into user values (NULL, "Daniel Silva de Sousa", "{bcrypt}$2a$10$M.d6DuQm/LuIn3E7yj202.vfW0Jm3zizx38fjQpQSlNIiU0PTbzxG", "ADMIN", "daniel");

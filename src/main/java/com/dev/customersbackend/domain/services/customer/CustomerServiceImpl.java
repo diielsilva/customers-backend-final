@@ -41,7 +41,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public Page<CustomerResponseDTO> findByName(String name, Pageable pageable) {
-        Page<Customer> customers = customerRepository.findByNameContaining(name, pageable);
+        Page<Customer> customers = customerRepository.findByNameContainingIgnoringCase(name, pageable);
         return customers.map(entityMapper::toDTO);
     }
 
@@ -56,7 +56,8 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerResponseDTO update(long id, CustomerRequestDTO customerDTO) {
         Customer customer = findByIdOrThrowsException(id);
         Customer updatedCustomer = entityMapper.toModel(customerDTO);
-        if (isPhoneInUse(customerDTO.getPhoneNumber()) && !customer.getPhone().getNumber().equals(customerDTO.getPhoneNumber())) {
+        if (isPhoneInUse(updatedCustomer.getPhone().getNumber()) &&
+                !customer.getPhone().getNumber().equals(updatedCustomer.getPhone().getNumber())) {
             throw new ConstraintException("O telefone: " + customer.getPhone().getNumber() + " já está em uso.");
         }
         customer.setName(updatedCustomer.getName());

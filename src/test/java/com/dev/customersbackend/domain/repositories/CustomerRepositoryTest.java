@@ -8,7 +8,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @Transactional
 @SpringBootTest
 @ActiveProfiles(value = "local")
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class CustomerRepositoryTest {
     @Autowired
     private CustomerRepository repository;
@@ -74,7 +72,7 @@ class CustomerRepositoryTest {
     @Test
     void findByNameContaining_AssertThatAreCustomers_WhenCustomersNameIsFound() {
         repository.saveAll(List.of(getVinicius(), getAgatha()));
-        Page<Customer> customers = repository.findByNameContaining("vini", PageRequest.of(0, 2));
+        Page<Customer> customers = repository.findByNameContainingIgnoringCase("vini", PageRequest.of(0, 2));
         assertEquals(1, customers.getContent().size());
         assertEquals("Vinicius Tiago Nathan Pires", customers.getContent().get(0).getName());
     }
@@ -82,7 +80,7 @@ class CustomerRepositoryTest {
     @Test
     void findByNameContaining_AssertThatAreNotCustomers_WhenCustomersNameIsNotFound() {
         repository.saveAll(List.of(getVinicius(), getAgatha()));
-        Page<Customer> customers = repository.findByNameContaining("alan", PageRequest.of(0, 2));
+        Page<Customer> customers = repository.findByNameContainingIgnoringCase("alan", PageRequest.of(0, 2));
         assertNotNull(customers);
         assertTrue(customers.isEmpty());
     }

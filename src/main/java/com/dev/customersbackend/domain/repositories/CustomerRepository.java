@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Page<Customer> findByOrderByName(Pageable pageable);
 
-    Page<Customer> findByNameContaining(String name, Pageable pageable);
+    Page<Customer> findByNameContainingIgnoringCase(String name, Pageable pageable);
 
     Optional<Customer> findByPhoneNumber(String number);
 }
