@@ -17,7 +17,7 @@ services:
       - customers-network
     volumes:
       - database_data:/var/lib/mysql
-  customers-backend:
+  customers-backend-final:
     image: diielsilva/customers-backend-final
     restart: always
     build: .
