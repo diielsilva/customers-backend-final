@@ -18,7 +18,7 @@ services:
     volumes:
       - database_data:/var/lib/mysql
   customers-backend:
-    image: diielsilva/customers-backend
+    image: diielsilva/customers-backend-final
     restart: always
     build: .
     environment:
