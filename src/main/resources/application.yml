@@ -1,8 +1,11 @@
+file:
+  upload-dir: /home/runner/work/customers-backend-final
+
 spring:
   datasource:
     url: jdbc:mariadb://localhost:3306/customers_backend
     username: root
-    password: admin
+    password: XF*49b^qX&Tt6k
 
   jpa:
     hibernate:
@@ -11,7 +14,7 @@ spring:
 
 security:
   aes:
-    key: 12345abc12345abc
+    key: fPW8SXtGcWG4vhCV
   token:
-    key: 12345bbc
+    key: MkrdPAJMBoeRPZX5BStzmJDJgmie69BzH4597BvKYr
     duration: 43200000
