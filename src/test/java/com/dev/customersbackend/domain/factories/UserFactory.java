@@ -14,6 +14,6 @@ public class UserFactory {
     }
 
     public static UserCredentialsRequestDTO getUserCredentials() {
-        return new UserCredentialsRequestDTO("daniel", "12345");
+        return new UserCredentialsRequestDTO("oliver", "12345");
     }
 }

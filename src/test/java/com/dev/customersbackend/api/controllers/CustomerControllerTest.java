@@ -4,17 +4,21 @@ import com.dev.customersbackend.common.dtos.customer.CustomerRequestDTO;
 import com.dev.customersbackend.common.dtos.customer.CustomerResponseDTO;
 import com.dev.customersbackend.common.dtos.error.ErrorResponseDTO;
 import com.dev.customersbackend.common.security.dtos.UserAccessResponseDTO;
+import com.dev.customersbackend.domain.entities.User;
 import com.dev.customersbackend.domain.factories.CustomerFactory;
 import com.dev.customersbackend.domain.factories.UserFactory;
+import com.dev.customersbackend.domain.repositories.UserRepository;
 import com.dev.customersbackend.helpers.TestHelper;
 import com.dev.customersbackend.wrappers.PageableWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,16 +29,25 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(value = "local")
-@Transactional
+@AutoConfigureTestDatabase
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class CustomerControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Autowired
+    private UserRepository repository;
+
+    @Autowired
+    private PasswordEncoder encoder;
+
     private HttpHeaders headers;
 
     @BeforeEach
     void beforeEach() {
+        User user = UserFactory.getOliverWithoutId();
+        user.setPassword(encoder.encode(user.getPassword()));
+        repository.save(user);
         headers = new HttpHeaders();
         String token = "";
         ResponseEntity<UserAccessResponseDTO> authResponse =
