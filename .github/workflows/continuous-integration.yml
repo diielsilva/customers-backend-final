@@ -34,7 +34,7 @@ jobs:
         
     - name: Pushing to Docker Hub
       run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/customers-backend-final:latest
+        docker push diielsilva/customers-backend-final:latest
   
     
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
